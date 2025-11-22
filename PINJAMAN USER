@@ -141,3 +141,80 @@ void kembalikanBuku(const char *username) {
     printf("\nPengembalian berhasil!\n");
     printf("Buku: %s\n", buku[idxBuku].judul);
 }
+int login(char *usertype, char *username) {
+    char password[50];
+
+    printf("\n========== LOGIN ==========\n");
+    printf("Username : ");
+    scanf("%49s", username);
+
+    printf("Password : ");
+    scanf("%49s", password);
+
+    /* LOGIN ADMIN */
+    if (STRCASECMP(username, "admin") == 0 &&
+        STRCASECMP(password, "000") == 0)
+    {
+        strcpy(usertype, "admin");
+        return 1;
+    }
+
+    /* LOGIN USER */
+    if (STRCASECMP(username, "user") == 0 &&
+        STRCASECMP(password, "111") == 0)
+    {
+        strcpy(usertype, "user");
+        return 1;
+    }
+
+    printf("\nUsername atau password salah!\n");
+    return 0;
+}
+
+/* ================================================================
+   MAIN PROGRAM
+   ================================================================ */
+
+int main() {
+    char username[50];
+    char usertype[10];
+
+    loadBuku();   // load buku dari buku.txt
+    loadLoan();   // load data pinjam
+
+    while (1) {
+
+        /* RESET username dan usertype sebelum login */
+        username[0] = '\0';
+        usertype[0] = '\0';
+
+        printf("\n===================================\n");
+        printf("        SISTEM PERPUSTAKAAN        \n");
+        printf("===================================\n");
+
+        /* LOGIN */
+        if (!login(usertype, username)) {
+            printf("Login gagal. Coba lagi.\n");
+            continue;
+        }
+
+        /* USER */
+        if (STRCASECMP(usertype, "user") == 0) {
+            printf("\nLogin sebagai USER (%s)\n", username);
+            menuUser(username);   // setelah selesai kembali ke login
+        }
+
+        /* ADMIN */
+        else if (STRCASECMP(usertype, "admin") == 0) {
+            printf("\nLogin sebagai ADMIN\n");
+            menuAdmin();          // setelah selesai kembali ke login
+        }
+
+        /* Setelah menu selesai → langsung kembali ke login */
+        printf("\nLogout...\n");
+    }
+
+    saveBuku();
+    saveLoan();
+    return 0;
+}
