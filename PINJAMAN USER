@@ -1,0 +1,143 @@
+/* MENAMPILKAN PINJAMAN USER */
+void cekPinjamanUser(const char *username) {
+    printf("\n=== Daftar Pinjaman Anda ===\n");
+
+    int found = 0;
+    for (int i = 0; i < jumlahLoan; i++) {
+        if (STRCASECMP(loan[i].user, username) == 0) {
+            int idxB = cariBukuByID(loan[i].idBuku);
+            if (idxB != -1) {
+                printf("ID:%d | Buku: %s | Deadline: %s",
+                       loan[i].idBuku,
+                       buku[idxB].judul,
+                       ctime(&loan[i].due_ts));
+                found = 1;
+            }
+        }
+    }
+
+    if (!found)
+        printf("(Tidak ada pinjaman)\n");
+}
+
+/* ================================================================
+   PINJAM BUKU
+   ================================================================ */
+void pinjamBuku(const char *username) {
+    char jenisList[20][50];
+    int totalJenis = listJenis(jenisList);
+
+    printf("\nPilih jenis buku: ");
+    int pilihJenis;
+    scanf("%d", &pilihJenis);
+
+    if (pilihJenis < 1 || pilihJenis > totalJenis) {
+        printf("Pilihan tidak valid!\n");
+        return;
+    }
+
+    const char *jenisDipilih = jenisList[pilihJenis - 1];
+
+    int indexOut[600];
+    int total = listBukuByJenis(jenisDipilih, indexOut, 600);
+
+    if (total == 0) return;
+
+    printf("\nMasukkan ID buku yang ingin dipinjam: ");
+    int id;
+    scanf("%d", &id);
+
+    int idx = cariBukuByID(id);
+    if (idx == -1) {
+        printf("Buku tidak ditemukan!\n");
+        return;
+    }
+
+    if (buku[idx].stok <= 0) {
+        printf("Stok habis!\n");
+        return;
+    }
+
+    /* Kurangi stok */
+    buku[idx].stok--;
+    saveBuku();
+
+    /* Catat waktu */
+    time_t now = time(NULL);
+    time_t due = now + (7 * 24 * 3600); // 7 hari
+
+    /* Simpan ke loan */
+    strcpy(loan[jumlahLoan].user, username);
+    loan[jumlahLoan].idBuku = id;
+    loan[jumlahLoan].pinjam_ts = now;
+    loan[jumlahLoan].due_ts = due;
+    jumlahLoan++;
+    saveLoan();
+
+    /* History */
+    historyWrite("PINJAM", username, buku[idx].judul);
+
+    printf("\nPeminjaman berhasil!\n");
+    printf("Judul: %s\n", buku[idx].judul);
+    printf("Deadline pengembalian: %s\n", ctime(&due));
+}
+
+/* ================================================================
+   PENGEMBALIAN
+   ================================================================ */
+void kembalikanBuku(const char *username) {
+    printf("\n=== Pengembalian Buku ===\n");
+
+    int daftarPinjaman[600];
+    int counter = 0;
+
+    for (int i = 0; i < jumlahLoan; i++) {
+        if (STRCASECMP(loan[i].user, username) == 0) {
+            int idxB = cariBukuByID(loan[i].idBuku);
+            if (idxB != -1) {
+                printf("%d. ID:%d | %s\n",
+                       counter + 1,
+                       loan[i].idBuku,
+                       buku[idxB].judul);
+
+                daftarPinjaman[counter] = i;
+                counter++;
+            }
+        }
+    }
+
+    if (counter == 0) {
+        printf("Anda tidak memiliki pinjaman.\n");
+        return;
+    }
+
+    printf("\nPilih nomor buku yang ingin dikembalikan: ");
+    int pilih;
+    scanf("%d", &pilih);
+
+    if (pilih < 1 || pilih > counter) {
+        printf("Pilihan salah!\n");
+        return;
+    }
+
+    int idxLoan = daftarPinjaman[pilih - 1];
+    int idBuku = loan[idxLoan].idBuku;
+    int idxBuku = cariBukuByID(idBuku);
+
+    /* Tambahkan stok */
+    buku[idxBuku].stok++;
+    saveBuku();
+
+    /* Catat history */
+    historyWrite("KEMBALI", username, buku[idxBuku].judul);
+
+    /* Hapus data pinjaman */
+    for (int i = idxLoan; i < jumlahLoan - 1; i++)
+        loan[i] = loan[i + 1];
+
+    jumlahLoan--;
+    saveLoan();
+
+    printf("\nPengembalian berhasil!\n");
+    printf("Buku: %s\n", buku[idxBuku].judul);
+}
