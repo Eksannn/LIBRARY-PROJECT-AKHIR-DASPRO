@@ -1,5 +1,5 @@
 /* MENAMPILKAN PINJAMAN USER */
-void cekPinjamanUser(const char *username) {
+void cekPinjamanUser(const char *username) { 
     printf("\n=== Daftar Pinjaman Anda ===\n");
 
     int found = 0;
