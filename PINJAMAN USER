@@ -44,7 +44,7 @@ int jumlahLoan = 0;
 /* ====================== LOADER DATASET ====================== */
 
 void loadBuku() {
-    FILE *fp = fopen(F_BUKU, "r");
+    FILE *fp = fopen(F_BUKU, "r"); 
     if (!fp) {
         printf("File buku.txt tidak ditemukan!\n");
         exit(1);
