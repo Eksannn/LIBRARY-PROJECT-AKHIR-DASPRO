@@ -367,3 +367,66 @@ int main() {
     saveLoan();
     return 0;
 }
+/* Mengecek apakah string sudah ada dalam array */
+int stringExists(char arr[][50], int count, const char *str) {
+    for (int i = 0; i < count; i++) {
+        if (STRCASECMP(arr[i], str) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+/* LIST JENIS BUKU OTOMATIS */
+int listJenis(char jenisList[][50]) {
+    int jml = 0;
+
+    for (int i = 0; i < jumlahBuku; i++) {
+        if (!stringExists(jenisList, jml, buku[i].jenis)) {
+            strcpy(jenisList[jml], buku[i].jenis);
+            jml++;
+        }
+    }
+
+    printf("\n=== DAFTAR JENIS BUKU ===\n");
+    for (int i = 0; i < jml; i++) {
+        printf("%d. %s\n", i + 1, jenisList[i]);
+    }
+
+    return jml;
+}
+
+/* LIST BUKU BERDASARKAN JENIS */
+int listBukuByJenis(const char *jenis, int indexOut[], int maxOut) {
+    int cnt = 0;
+
+    printf("\n=== DAFTAR BUKU JENIS: %s ===\n", jenis);
+
+    for (int i = 0; i < jumlahBuku; i++) {
+        if (STRCASECMP(buku[i].jenis, jenis) == 0) {
+
+            if (cnt < maxOut)
+                indexOut[cnt] = i;
+
+            printf("ID:%3d | %-40s | Stok: %2d\n",
+                   buku[i].id,
+                   buku[i].judul,
+                   buku[i].stok);
+
+            cnt++;
+        }
+    }
+
+    if (cnt == 0)
+        printf("(Tidak ada buku jenis ini)\n");
+
+    return cnt;
+}
+
+/* CARI BUKU BERDASARKAN ID */
+int cariBukuByID(int id) {
+    for (int i = 0; i < jumlahBuku; i++) {
+        if (buku[i].id == id)
+            return i;
+    }
+    return -1;
+}
