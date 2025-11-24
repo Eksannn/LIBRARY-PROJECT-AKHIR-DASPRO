@@ -4,8 +4,10 @@
 #include <time.h>
 
 #ifdef _WIN32
+  #define CLEAR system("cls")
   #define STRCASECMP _stricmp
 #else
+  #define CLEAR system("clear")
   #define STRCASECMP strcasecmp
 #endif
 
@@ -152,7 +154,6 @@ void historyWrite(const char *aksi, const char *user, const char *judul) {
    BAGIAN 2 — LIST JENIS BUKU, LIST BUKU PER JENIS, SEARCH
    ================================================================ */
 
-/* Mengecek apakah string sudah ada dalam array */
 int stringExists(char arr[][50], int count, const char *str) {
     for (int i = 0; i < count; i++) {
         if (STRCASECMP(arr[i], str) == 0)
@@ -161,32 +162,21 @@ int stringExists(char arr[][50], int count, const char *str) {
     return 0;
 }
 
-/* ================================================================
-   LIST JENIS BUKU OTOMATIS (Tanpa Hardcode)
-   ================================================================ */
 int listJenis(char jenisList[][50]) {
     int jml = 0;
 
+    printf("\n=== DAFTAR JENIS BUKU ===\n");
     for (int i = 0; i < jumlahBuku; i++) {
         if (!stringExists(jenisList, jml, buku[i].jenis)) {
             strcpy(jenisList[jml], buku[i].jenis);
+            printf("%d. %s\n", jml + 1, jenisList[jml]);
             jml++;
         }
-    }
-
-    printf("\n=== DAFTAR JENIS BUKU ===\n");
-    for (int i = 0; i < jml; i++) {
-        printf("%d. %s\n", i + 1, jenisList[i]);
     }
 
     return jml;
 }
 
-/* ================================================================
-   LIST BUKU BERDASARKAN JENIS
-   indexOut[] berisi INDEX buku di array 'buku[]'
-   return: jumlah buku dari jenis tersebut
-   ================================================================ */
 int listBukuByJenis(const char *jenis, int indexOut[], int maxOut) {
     int cnt = 0;
 
@@ -194,9 +184,7 @@ int listBukuByJenis(const char *jenis, int indexOut[], int maxOut) {
 
     for (int i = 0; i < jumlahBuku; i++) {
         if (STRCASECMP(buku[i].jenis, jenis) == 0) {
-
-            if (cnt < maxOut)
-                indexOut[cnt] = i;
+            if (cnt < maxOut) indexOut[cnt] = i;
 
             printf("ID:%3d | %-40s | Stok: %2d\n",
                    buku[i].id,
@@ -213,10 +201,6 @@ int listBukuByJenis(const char *jenis, int indexOut[], int maxOut) {
     return cnt;
 }
 
-/* ================================================================
-   CARI BUKU BERDASARKAN ID
-   Return: index di array 'buku[]' atau -1 jika tidak ada
-   ================================================================ */
 int cariBukuByID(int id) {
     for (int i = 0; i < jumlahBuku; i++) {
         if (buku[i].id == id)
@@ -229,7 +213,6 @@ int cariBukuByID(int id) {
    BAGIAN 3 — PINJAM, KEMBALIKAN, CEK PINJAMAN
    ================================================================ */
 
-/* MENAMPILKAN PINJAMAN USER */
 void cekPinjamanUser(const char *username) {
     printf("\n=== Daftar Pinjaman Anda ===\n");
 
@@ -251,9 +234,6 @@ void cekPinjamanUser(const char *username) {
         printf("(Tidak ada pinjaman)\n");
 }
 
-/* ================================================================
-   PINJAM BUKU
-   ================================================================ */
 void pinjamBuku(const char *username) {
     char jenisList[20][50];
     int totalJenis = listJenis(jenisList);
@@ -289,15 +269,12 @@ void pinjamBuku(const char *username) {
         return;
     }
 
-    /* Kurangi stok */
     buku[idx].stok--;
     saveBuku();
 
-    /* Catat waktu */
     time_t now = time(NULL);
-    time_t due = now + (7 * 24 * 3600); // 7 hari
+    time_t due = now + (7 * 24 * 3600);
 
-    /* Simpan ke loan */
     strcpy(loan[jumlahLoan].user, username);
     loan[jumlahLoan].idBuku = id;
     loan[jumlahLoan].pinjam_ts = now;
@@ -305,7 +282,6 @@ void pinjamBuku(const char *username) {
     jumlahLoan++;
     saveLoan();
 
-    /* History */
     historyWrite("PINJAM", username, buku[idx].judul);
 
     printf("\nPeminjaman berhasil!\n");
@@ -313,9 +289,6 @@ void pinjamBuku(const char *username) {
     printf("Deadline pengembalian: %s\n", ctime(&due));
 }
 
-/* ================================================================
-   PENGEMBALIAN
-   ================================================================ */
 void kembalikanBuku(const char *username) {
     printf("\n=== Pengembalian Buku ===\n");
 
@@ -342,7 +315,7 @@ void kembalikanBuku(const char *username) {
         return;
     }
 
-    printf("\nPilih nomor buku yang ingin dikembalikan: ");
+    printf("\nPilih nomor buku: ");
     int pilih;
     scanf("%d", &pilih);
 
@@ -355,14 +328,11 @@ void kembalikanBuku(const char *username) {
     int idBuku = loan[idxLoan].idBuku;
     int idxBuku = cariBukuByID(idBuku);
 
-    /* Tambahkan stok */
     buku[idxBuku].stok++;
     saveBuku();
 
-    /* Catat history */
     historyWrite("KEMBALI", username, buku[idxBuku].judul);
 
-    /* Hapus data pinjaman */
     for (int i = idxLoan; i < jumlahLoan - 1; i++)
         loan[i] = loan[i + 1];
 
@@ -370,60 +340,17 @@ void kembalikanBuku(const char *username) {
     saveLoan();
 
     printf("\nPengembalian berhasil!\n");
-    printf("Buku: %s\n", buku[idxBuku].judul);
 }
 
 /* ================================================================
-   BAGIAN 4 — MENU USER & MENU ADMIN
-   ================================================================ */
-
-/* ========================== MENU USER ========================== */
-void menuUser(const char *username) {
-    int pilih;
-
-    do {
-        printf("\n============================\n");
-        printf("     MENU USER (%s)\n", username);
-        printf("============================\n");
-        printf("1. Pinjam Buku\n");
-        printf("2. Kembalikan Buku\n");
-        printf("3. Lihat Pinjaman Saya\n");
-        printf("4. Logout\n");
-        printf("Pilih: ");
-        scanf("%d", &pilih);
-
-        switch (pilih) {
-            case 1:
-                pinjamBuku(username);
-                break;
-            case 2:
-                kembalikanBuku(username);
-                break;
-            case 3:
-                cekPinjamanUser(username);
-                break;
-            case 4:
-                printf("Logout berhasil.\n");
-                break;
-            default:
-                printf("Pilihan tidak valid!\n");
-        }
-
-    } while (pilih != 4);
-}
-
-/* ================================================================
-   MENU ADMIN
+   MENU ADMIN & USER
    ================================================================ */
 
 void tampilkanSemuaBuku() {
     printf("\n=== DAFTAR BUKU ===\n");
     for (int i = 0; i < jumlahBuku; i++) {
-        printf("ID:%3d | %-40s | Jenis: %-12s | Stok: %d\n",
-               buku[i].id,
-               buku[i].judul,
-               buku[i].jenis,
-               buku[i].stok);
+        printf("ID:%3d | %-40s | %-12s | Stok: %d\n",
+               buku[i].id, buku[i].judul, buku[i].jenis, buku[i].stok);
     }
 }
 
@@ -433,24 +360,24 @@ void tambahBuku() {
     int stok;
 
     printf("\n=== TAMBAH BUKU ===\n");
-    printf("Masukkan ID baru: ");
+    printf("Masukkan ID: ");
     scanf("%d", &idbaru);
 
     if (cariBukuByID(idbaru) != -1) {
-        printf("ID sudah digunakan!\n");
+        printf("ID sudah dipakai!\n");
         return;
     }
 
     getchar();
-    printf("Masukkan judul: ");
+    printf("Judul: ");
     fgets(judul, sizeof(judul), stdin);
     judul[strcspn(judul, "\n")] = 0;
 
-    printf("Masukkan jenis: ");
+    printf("Jenis: ");
     fgets(jenis, sizeof(jenis), stdin);
     jenis[strcspn(jenis, "\n")] = 0;
 
-    printf("Masukkan stok awal: ");
+    printf("Stok awal: ");
     scanf("%d", &stok);
 
     buku[jumlahBuku].id = idbaru;
@@ -466,7 +393,7 @@ void tambahBuku() {
 
 void hapusBuku() {
     int id;
-    printf("\nMasukkan ID buku yang ingin dihapus: ");
+    printf("\nMasukkan ID buku: ");
     scanf("%d", &id);
 
     int idx = cariBukuByID(id);
@@ -485,8 +412,8 @@ void hapusBuku() {
 }
 
 void tambahStokBuku() {
-    int id, tambah;
-    printf("\nMasukkan ID buku yang ingin ditambah stoknya: ");
+    int id, jumlah;
+    printf("\nMasukkan ID buku: ");
     scanf("%d", &id);
 
     int idx = cariBukuByID(id);
@@ -495,55 +422,65 @@ void tambahStokBuku() {
         return;
     }
 
-    printf("Masukkan jumlah penambahan stok: ");
-    scanf("%d", &tambah);
+    printf("Tambah berapa stok? ");
+    scanf("%d", &jumlah);
 
-    buku[idx].stok += tambah;
+    buku[idx].stok += jumlah;
     saveBuku();
 
-    printf("Stok berhasil ditambahkan!\n");
+    printf("Stok berhasil ditambah!\n");
+}
+
+void menuUser(const char *username) {
+    int pilih;
+
+    do {
+        printf("\n========== MENU USER (%s) ==========\n", username);
+        printf("1. Pinjam Buku\n");
+        printf("2. Kembalikan Buku\n");
+        printf("3. Lihat Pinjaman\n");
+        printf("4. Logout\n");
+        printf("Pilih: ");
+        scanf("%d", &pilih);
+
+        switch (pilih) {
+            case 1: pinjamBuku(username); break;
+            case 2: kembalikanBuku(username); break;
+            case 3: cekPinjamanUser(username); break;
+            case 4: return;
+            default: printf("Pilihan salah!\n");
+        }
+
+    } while (1);
 }
 
 void menuAdmin() {
     int pilih;
 
     do {
-        printf("\n============================\n");
-        printf("          MENU ADMIN       \n");
-        printf("============================\n");
-        printf("1. Lihat Semua Buku\n");
+        printf("\n========== MENU ADMIN ==========\n");
+        printf("1. Lihat Buku\n");
         printf("2. Tambah Buku\n");
         printf("3. Hapus Buku\n");
-        printf("4. Tambah Stok Buku\n");
+        printf("4. Tambah Stok\n");
         printf("5. Logout\n");
         printf("Pilih: ");
         scanf("%d", &pilih);
 
         switch (pilih) {
-            case 1:
-                tampilkanSemuaBuku();
-                break;
-            case 2:
-                tambahBuku();
-                break;
-            case 3:
-                hapusBuku();
-                break;
-            case 4:
-                tambahStokBuku();
-                break;
-            case 5:
-                printf("Logout berhasil.\n");
-                break;
-            default:
-                printf("Pilihan tidak valid!\n");
+            case 1: tampilkanSemuaBuku(); break;
+            case 2: tambahBuku(); break;
+            case 3: hapusBuku(); break;
+            case 4: tambahStokBuku(); break;
+            case 5: return;
+            default: printf("Pilihan salah!\n");
         }
 
-    } while (pilih != 5);
+    } while (1);
 }
 
 /* ================================================================
-   BAGIAN 5 — LOGIN SYSTEM + MAIN PROGRAM
+   LOGIN SYSTEM
    ================================================================ */
 
 int login(char *usertype, char *username) {
@@ -556,18 +493,12 @@ int login(char *usertype, char *username) {
     printf("Password : ");
     scanf("%49s", password);
 
-    /* LOGIN ADMIN */
-    if (STRCASECMP(username, "admin") == 0 &&
-        STRCASECMP(password, "000") == 0)
-    {
+    if (STRCASECMP(username, "admin") == 0 && STRCASECMP(password, "000") == 0) {
         strcpy(usertype, "admin");
         return 1;
     }
 
-    /* LOGIN USER */
-    if (STRCASECMP(username, "user") == 0 &&
-        STRCASECMP(password, "111") == 0)
-    {
+    if (STRCASECMP(username, "user") == 0 && STRCASECMP(password, "111") == 0) {
         strcpy(usertype, "user");
         return 1;
     }
@@ -577,445 +508,55 @@ int login(char *usertype, char *username) {
 }
 
 /* ================================================================
-   MAIN PROGRAM
+   MAIN PROGRAM (UPDATED)
    ================================================================ */
 
 int main() {
     char username[50];
     char usertype[10];
+    int pilihAwal;
 
-    loadBuku();   // load buku dari buku.txt
-    loadLoan();   // load data pinjam
+    loadBuku();
+    loadLoan();
 
     while (1) {
 
-        /* RESET username dan usertype sebelum login */
-        username[0] = '\0';
-        usertype[0] = '\0';
+        printf("\n=========== MENU AWAL ===========\n");
+        printf("1. Login\n");
+        printf("2. Exit\n");
+        printf("Pilih: ");
+        scanf("%d", &pilihAwal);
 
-        printf("\n===================================\n");
-        printf("        SISTEM PERPUSTAKAAN        \n");
-        printf("===================================\n");
+        if (pilihAwal == 2) {
+            printf("Program selesai.\n");
+            break;
+        }
 
-        /* LOGIN */
-        if (!login(usertype, username)) {
-            printf("Login gagal. Coba lagi.\n");
+        if (pilihAwal != 1) {
+            printf("Pilihan tidak valid!\n");
             continue;
         }
 
-        /* USER */
-        if (STRCASECMP(usertype, "user") == 0) {
-            printf("\nLogin sebagai USER (%s)\n", username);
-            menuUser(username);   // setelah selesai kembali ke login
-        }
-
-        /* ADMIN */
-        else if (STRCASECMP(usertype, "admin") == 0) {
-            printf("\nLogin sebagai ADMIN\n");
-            menuAdmin();          // setelah selesai kembali ke login
-        }
-
-        /* Setelah menu selesai → langsung kembali ke login */
-        printf("\nLogout...\n");
-    }
-
-    saveBuku();
-    saveLoan();
-    return 0;
-}
-/* ARRAY MEMORY */
-Buku buku[MAX_BOOK];
-int jumlahBuku = 0;
-
-Pinjam loan[MAX_LOAN];
-int jumlahLoan = 0;
-
-/* LOADER DATASET */
-
-void loadBuku() {
-    FILE *fp = fopen(F_BUKU, "r");
-    if (!fp) {
-        printf("File buku.txt tidak ditemukan!\n");
-        exit(1);
-    }
-
-    jumlahBuku = 0;
-
-    char line[512];
-    while (fgets(line, sizeof(line), fp)) {
-        if (strlen(line) < 5) continue;
-
-        int id, stok;
-        char judul[200], jenis[50];
-
-        if (sscanf(line, "%d;%199[^;];%49[^;];%d",
-                   &id, judul, jenis, &stok) == 4)
-        {
-            buku[jumlahBuku].id = id;
-            strcpy(buku[jumlahBuku].judul, judul);
-            strcpy(buku[jumlahBuku].jenis, jenis);
-            buku[jumlahBuku].stok = stok;
-            jumlahBuku++;
-        }
-    }
-
-    fclose(fp);
-}
-
-/*  SAVE DATASET  */
-
-void saveBuku() {
-    FILE *fp = fopen(F_BUKU, "w");
-    if (!fp) return;
-
-    for (int i = 0; i < jumlahBuku; i++) {
-        fprintf(fp, "%d;%s;%s;%d\n",
-                buku[i].id,
-                buku[i].judul,
-                buku[i].jenis,
-                buku[i].stok);
-    }
-
-    fclose(fp);
-}
-
-/*  LOADER PINJAMAN  */
-
-void loadLoan() {
-    FILE *fp = fopen(F_LOAN, "r");
-    if (!fp) return;
-
-    jumlahLoan = 0;
-
-    char line[256];
-    while (fgets(line, sizeof(line), fp)) {
-        char user[50];
-        int id;
-        long long ts, due;
-
-        if (sscanf(line, "%49[^;];%d;%lld;%lld",
-                   user, &id, &ts, &due) == 4)
-        {
-            strcpy(loan[jumlahLoan].user, user);
-            loan[jumlahLoan].idBuku = id;
-            loan[jumlahLoan].pinjam_ts = ts;
-            loan[jumlahLoan].due_ts = due;
-            jumlahLoan++;
-        }
-    }
-
-    fclose(fp);
-}
-
-/*  SAVE PINJAMAN  */
-
-void saveLoan() {
-    FILE *fp = fopen(F_LOAN, "w");
-    if (!fp) return;
-
-    for (int i = 0; i < jumlahLoan; i++) {
-        fprintf(fp, "%s;%d;%lld;%lld\n",
-                loan[i].user,
-                loan[i].idBuku,
-                loan[i].pinjam_ts,
-                loan[i].due_ts);
-    }
-
-    fclose(fp);
-}
-
-/*  HISTORY  */
-
-void historyWrite(const char *aksi, const char *user, const char *judul) {
-    FILE *fp = fopen(F_HIST, "a");
-    if (!fp) return;
-
-    time_t t = time(NULL);
-    fprintf(fp, "%s | %s | %s | %s\n",
-            aksi, user, judul, ctime(&t));
-
-    fclose(fp);
-}
-/* MENAMPILKAN PINJAMAN USER */
-void cekPinjamanUser(const char *username) { 
-    printf("\n=== Daftar Pinjaman Anda ===\n");
-
-    int found = 0;
-    for (int i = 0; i < jumlahLoan; i++) {
-        if (STRCASECMP(loan[i].user, username) == 0) {
-            int idxB = cariBukuByID(loan[i].idBuku);
-            if (idxB != -1) {
-                printf("ID:%d | Buku: %s | Deadline: %s",
-                       loan[i].idBuku,
-                       buku[idxB].judul,
-                       ctime(&loan[i].due_ts));
-                found = 1;
-            }
-        }
-    }
-
-    if (!found)
-        printf("(Tidak ada pinjaman)\n");
-}
-
-/* ================================================================
-   PINJAM BUKU
-   ================================================================ */
-void pinjamBuku(const char *username) {
-    char jenisList[20][50];
-    int totalJenis = listJenis(jenisList);
-
-    printf("\nPilih jenis buku: ");
-    int pilihJenis;
-    scanf("%d", &pilihJenis);
-
-    if (pilihJenis < 1 || pilihJenis > totalJenis) {
-        printf("Pilihan tidak valid!\n");
-        return;
-    }
-
-    const char *jenisDipilih = jenisList[pilihJenis - 1];
-
-    int indexOut[600];
-    int total = listBukuByJenis(jenisDipilih, indexOut, 600);
-
-    if (total == 0) return;
-
-    printf("\nMasukkan ID buku yang ingin dipinjam: ");
-    int id;
-    scanf("%d", &id);
-
-    int idx = cariBukuByID(id);
-    if (idx == -1) {
-        printf("Buku tidak ditemukan!\n");
-        return;
-    }
-
-    if (buku[idx].stok <= 0) {
-        printf("Stok habis!\n");
-        return;
-    }
-
-    /* Kurangi stok */
-    buku[idx].stok--;
-    saveBuku();
-
-    /* Catat waktu */
-    time_t now = time(NULL);
-    time_t due = now + (7 * 24 * 3600); // 7 hari
-
-    /* Simpan ke loan */
-    strcpy(loan[jumlahLoan].user, username);
-    loan[jumlahLoan].idBuku = id;
-    loan[jumlahLoan].pinjam_ts = now;
-    loan[jumlahLoan].due_ts = due;
-    jumlahLoan++;
-    saveLoan();
-
-    /* History */
-    historyWrite("PINJAM", username, buku[idx].judul);
-
-    printf("\nPeminjaman berhasil!\n");
-    printf("Judul: %s\n", buku[idx].judul);
-    printf("Deadline pengembalian: %s\n", ctime(&due));
-}
-
-/* ================================================================
-   PENGEMBALIAN
-   ================================================================ */
-void kembalikanBuku(const char *username) {
-    printf("\n=== Pengembalian Buku ===\n");
-
-    int daftarPinjaman[600];
-    int counter = 0;
-
-    for (int i = 0; i < jumlahLoan; i++) {
-        if (STRCASECMP(loan[i].user, username) == 0) {
-            int idxB = cariBukuByID(loan[i].idBuku);
-            if (idxB != -1) {
-                printf("%d. ID:%d | %s\n",
-                       counter + 1,
-                       loan[i].idBuku,
-                       buku[idxB].judul);
-
-                daftarPinjaman[counter] = i;
-                counter++;
-            }
-        }
-    }
-
-    if (counter == 0) {
-        printf("Anda tidak memiliki pinjaman.\n");
-        return;
-    }
-
-    printf("\nPilih nomor buku yang ingin dikembalikan: ");
-    int pilih;
-    scanf("%d", &pilih);
-
-    if (pilih < 1 || pilih > counter) {
-        printf("Pilihan salah!\n");
-        return;
-    }
-
-    int idxLoan = daftarPinjaman[pilih - 1];
-    int idBuku = loan[idxLoan].idBuku;
-    int idxBuku = cariBukuByID(idBuku);
-
-    /* Tambahkan stok */
-    buku[idxBuku].stok++;
-    saveBuku();
-
-    /* Catat history */
-    historyWrite("KEMBALI", username, buku[idxBuku].judul);
-
-    /* Hapus data pinjaman */
-    for (int i = idxLoan; i < jumlahLoan - 1; i++)
-        loan[i] = loan[i + 1];
-
-    jumlahLoan--;
-    saveLoan();
-
-    printf("\nPengembalian berhasil!\n");
-    printf("Buku: %s\n", buku[idxBuku].judul);
-}
-int login(char *usertype, char *username) {
-    char password[50];
-
-    printf("\n========== LOGIN ==========\n");
-    printf("Username : ");
-    scanf("%49s", username);
-
-    printf("Password : ");
-    scanf("%49s", password);
-
-    /* LOGIN ADMIN */
-    if (STRCASECMP(username, "admin") == 0 &&
-        STRCASECMP(password, "000") == 0)
-    {
-        strcpy(usertype, "admin");
-        return 1;
-    }
-
-    /* LOGIN USER */
-    if (STRCASECMP(username, "user") == 0 &&
-        STRCASECMP(password, "111") == 0)
-    {
-        strcpy(usertype, "user");
-        return 1;
-    }
-
-    printf("\nUsername atau password salah!\n");
-    return 0;
-}
-
-/* ================================================================
-   MAIN PROGRAM
-   ================================================================ */
-
-int main() {
-    char username[50];
-    char usertype[10];
-
-    loadBuku();   // load buku dari buku.txt
-    loadLoan();   // load data pinjam
-
-    while (1) {
-
-        /* RESET username dan usertype sebelum login */
-        username[0] = '\0';
-        usertype[0] = '\0';
-
-        printf("\n===================================\n");
-        printf("        SISTEM PERPUSTAKAAN        \n");
-        printf("===================================\n");
-
-        /* LOGIN */
         if (!login(usertype, username)) {
-            printf("Login gagal. Coba lagi.\n");
             continue;
         }
 
-        /* USER */
+        CLEAR;
+
         if (STRCASECMP(usertype, "user") == 0) {
             printf("\nLogin sebagai USER (%s)\n", username);
-            menuUser(username);   // setelah selesai kembali ke login
-        }
-
-        /* ADMIN */
+            menuUser(username);
+        } 
         else if (STRCASECMP(usertype, "admin") == 0) {
             printf("\nLogin sebagai ADMIN\n");
-            menuAdmin();          // setelah selesai kembali ke login
+            menuAdmin();
         }
 
-        /* Setelah menu selesai → langsung kembali ke login */
         printf("\nLogout...\n");
+        CLEAR;
     }
 
     saveBuku();
     saveLoan();
-    return 0;
-}
-/* Mengecek apakah string sudah ada dalam array */
-int stringExists(char arr[][50], int count, const char *str) {
-    for (int i = 0; i < count; i++) {
-        if (STRCASECMP(arr[i], str) == 0)
-            return 1;
-    }
     return 0;
-}
-
-/* LIST JENIS BUKU OTOMATIS */
-int listJenis(char jenisList[][50]) {
-    int jml = 0;
-
-    for (int i = 0; i < jumlahBuku; i++) {
-        if (!stringExists(jenisList, jml, buku[i].jenis)) {
-            strcpy(jenisList[jml], buku[i].jenis);
-            jml++;
-        }
-    }
-
-    printf("\n=== DAFTAR JENIS BUKU ===\n");
-    for (int i = 0; i < jml; i++) {
-        printf("%d. %s\n", i + 1, jenisList[i]);
-    }
-
-    return jml;
-}
-
-/* LIST BUKU BERDASARKAN JENIS */
-int listBukuByJenis(const char *jenis, int indexOut[], int maxOut) {
-    int cnt = 0;
-
-    printf("\n=== DAFTAR BUKU JENIS: %s ===\n", jenis);
-
-    for (int i = 0; i < jumlahBuku; i++) {
-        if (STRCASECMP(buku[i].jenis, jenis) == 0) {
-
-            if (cnt < maxOut)
-                indexOut[cnt] = i;
-
-            printf("ID:%3d | %-40s | Stok: %2d\n",
-                   buku[i].id,
-                   buku[i].judul,
-                   buku[i].stok);
-
-            cnt++;
-        }
-    }
-
-    if (cnt == 0)
-        printf("(Tidak ada buku jenis ini)\n");
-
-    return cnt;
-}
-
-/* CARI BUKU BERDASARKAN ID */
-int cariBukuByID(int id) {
-    for (int i = 0; i < jumlahBuku; i++) {
-        if (buku[i].id == id)
-            return i;
-    }
-    return -1;
 }
