@@ -15,12 +15,12 @@
 #define MAX_NAME 200
 #define MAX_LOAN 600
 
-/* FILES */
+// file
 const char *F_BUKU = "buku.txt";
 const char *F_LOAN = "data_pinjam.txt";
 const char *F_HIST = "history.txt";
 
-/* STRUKTUR BUKU */
+// struktur buku
 typedef struct {
     int id;
     char judul[MAX_NAME];
@@ -28,7 +28,7 @@ typedef struct {
     int stok;
 } Buku;
 
-/* STRUKTUR PINJAMAN */
+// struktur pinjaman
 typedef struct {
     char user[50];
     int idBuku;
@@ -36,14 +36,14 @@ typedef struct {
     long long due_ts;
 } Pinjam;
 
-/* ARRAY MEMORY */
+// array memori
 Buku buku[MAX_BOOK];
 int jumlahBuku = 0;
 
 Pinjam loan[MAX_LOAN];
 int jumlahLoan = 0;
 
-/* ====================== LOADER DATASET ====================== */
+// load dataset
 
 void loadBuku() {
     FILE *fp = fopen(F_BUKU, "r"); 
@@ -75,7 +75,7 @@ void loadBuku() {
     fclose(fp);
 }
 
-/* ====================== SAVE DATASET ====================== */
+// save data set
 
 void saveBuku() {
     FILE *fp = fopen(F_BUKU, "w");
@@ -92,7 +92,7 @@ void saveBuku() {
     fclose(fp);
 }
 
-/* ====================== LOADER PINJAMAN ====================== */
+// load pinjaman
 
 void loadLoan() {
     FILE *fp = fopen(F_LOAN, "r");
@@ -120,7 +120,7 @@ void loadLoan() {
     fclose(fp);
 }
 
-/* ====================== SAVE PINJAMAN ====================== */
+// save pinjaman
 
 void saveLoan() {
     FILE *fp = fopen(F_LOAN, "w");
@@ -137,7 +137,7 @@ void saveLoan() {
     fclose(fp);
 }
 
-/* ====================== HISTORY ====================== */
+// history
 
 void historyWrite(const char *aksi, const char *user, const char *judul) {
     FILE *fp = fopen(F_HIST, "a");
@@ -150,9 +150,7 @@ void historyWrite(const char *aksi, const char *user, const char *judul) {
     fclose(fp);
 }
 
-/* ================================================================
-   BAGIAN 2 — LIST JENIS BUKU, LIST BUKU PER JENIS, SEARCH
-   ================================================================ */
+// list
 
 int stringExists(char arr[][50], int count, const char *str) {
     for (int i = 0; i < count; i++) {
@@ -209,9 +207,7 @@ int cariBukuByID(int id) {
     return -1;
 }
 
-/* ================================================================
-   BAGIAN 3 — PINJAM, KEMBALIKAN, CEK PINJAMAN
-   ================================================================ */
+// pinjam  balik
 
 void cekPinjamanUser(const char *username) {
     printf("\n=== Daftar Pinjaman Anda ===\n");
@@ -342,9 +338,7 @@ void kembalikanBuku(const char *username) {
     printf("\nPengembalian berhasil!\n");
 }
 
-/* ================================================================
-   MENU ADMIN & USER
-   ================================================================ */
+// menu adminuser
 
 void tampilkanSemuaBuku() {
     printf("\n=== DAFTAR BUKU ===\n");
@@ -479,9 +473,7 @@ void menuAdmin() {
     } while (1);
 }
 
-/* ================================================================
-   LOGIN SYSTEM
-   ================================================================ */
+// sistem login
 
 int login(char *usertype, char *username) {
     char password[50];
@@ -507,9 +499,7 @@ int login(char *usertype, char *username) {
     return 0;
 }
 
-/* ================================================================
-   MAIN PROGRAM (UPDATED)
-   ================================================================ */
+// main program
 
 int main() {
     char username[50];
